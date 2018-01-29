@@ -7,21 +7,48 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Scanner implements Runnable {
     private Scanned app;
-    private Folder folder;
+    private List<Folder> folders;
     
-    Scanner(Scanned app, Folder folder) {
-        this.folder = folder;
+    Scanner(Scanned app) {
         this.app = app;
-        this.folder = folder;
+        this.folders = new ArrayList<>();
+    }
+
+    public void addFolder(Folder folder) {
+        new Thread(new AddFolder(this.folders, folder)).start();
+    }
+
+    public void addFolders(List<Folder> _folders) {
+        synchronized (this.folders) {
+            this.folders.addAll(_folders);
+            this.folders.notify();
+        }
     }
 
     public void run() {
-        File startFolder = new File(folder.getPath());
-        scanFolder(startFolder);
-        app.folderScanned(folder);
+        synchronized (this.folders) {
+            while (true) {
+                while (folders.size() > 0) {
+                    Folder folder = folders.get(0);
+                    app.folderStarted(folder);
+                    File startFolder = new File(folder.getPath());
+                    scanFolder(startFolder, folder);
+                    app.folderScanned(folder);
+                    folders.remove(0);
+                }
+
+                try {
+                    folders.wait();
+                } catch (InterruptedException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
+        }
     }
 
     public static String hashFile(String path) {
@@ -50,7 +77,7 @@ public class Scanner implements Runnable {
         }
     }
     
-    private void scanFolder(File folder) {
+    private void scanFolder(File folder, Folder initialFolder) {
         if (!folder.isDirectory()) {
             return;
         }
@@ -61,10 +88,26 @@ public class Scanner implements Runnable {
                 if (f.isFile()) {
                     String path = f.getAbsolutePath();
                     String hash = Scanner.hashFile(path);
-                    this.app.fileScanned(new com.backup.db.File(path, hash, this.folder));
+                    this.app.fileScanned(new com.backup.db.File(path, hash, initialFolder));
                 } else if(f.isDirectory() && !Files.isSymbolicLink(f.toPath())) {
-                    scanFolder(f);
+                    scanFolder(f, initialFolder);
                 }
+            }
+        }
+    }
+
+    private class AddFolder implements Runnable {
+        private List<Folder> folders;
+        private Folder folder;
+        public AddFolder(List<Folder> folders, Folder folder) {
+            this.folders = folders;
+            this.folder = folder;
+        }
+
+        public void run() {
+            synchronized (this.folders) {
+                this.folders.add(folder);
+                this.folders.notify();
             }
         }
     }

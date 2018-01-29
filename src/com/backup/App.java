@@ -15,8 +15,10 @@ public class App implements Scanned {
     private JPanel bar_panel;
     private JLabel bar_label;
     private JTextArea log;
+    private JButton rescan;
     private DefaultListModel<String> listModel;
     private Storage storage;
+    private Scanner scanner;
 
     private App() {
         listModel = new DefaultListModel<>();
@@ -33,6 +35,9 @@ public class App implements Scanned {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
 
+        scanner = new Scanner(this);
+        new Thread(scanner).start();
+
         addFolder.addActionListener((ActionEvent e) -> {
             JFileChooser fc = new JFileChooser();
             fc.setCurrentDirectory(new java.io.File("."));
@@ -48,16 +53,27 @@ public class App implements Scanned {
                     }
 
                     listModel.addElement(path);
-                    bar_label.setText(path + " scanning...");
+                    this.scanner.addFolder(new Folder(path, this.storage.getConnection()));
 
-                    Scanner s = new Scanner(this, new Folder(path, this.storage.getConnection()));
-                    new Thread(s).start();
                 } catch (SQLException ex) {
                     JOptionPane.showMessageDialog(null, ex.getMessage());
                 }
 
             }
         });
+
+        rescan.addActionListener((ActionEvent e) -> {
+            try {
+                List<Folder> folders = Folder.getAll(storage.getConnection());
+                this.scanner.addFolders(folders);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        });
+    }
+
+    public void folderStarted(Folder folder) {
+        bar_label.setText(folder.getPath() + " scanning...");
     }
 
     public void folderScanned(Folder folder) {
