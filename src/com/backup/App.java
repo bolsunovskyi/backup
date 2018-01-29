@@ -38,7 +38,7 @@ public class App {
     }
 
     public void scanFile(String file) {
-        log.append(file + "\r\n");
+        log.insert(file + "\r\n", 0);
     }
 
     public static void main(String[] args) {

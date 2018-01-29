@@ -1,6 +1,8 @@
 package com.backup;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class Scanner implements Runnable {
                     //this.files.add(path);
                     System.out.println(path);
                     this.app.scanFile(path);
-                } else if(f.isDirectory()) {
+                } else if(f.isDirectory() && !Files.isSymbolicLink(f.toPath())) {
                     scanFolder(f);
                 }
             }

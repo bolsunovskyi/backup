@@ -8,14 +8,6 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="eea17" class="javax.swing.JList" binding="folder_list">
-        <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="150" height="50"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
       <component id="9f41e" class="javax.swing.JButton" binding="addFolder">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
@@ -43,19 +35,38 @@
               <text value="Backup Tool"/>
             </properties>
           </component>
-          <component id="aec56" class="javax.swing.JTextArea" binding="log">
+          <scrollpane id="433a6">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                <preferred-size width="150" height="50"/>
-              </grid>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <requestFocusEnabled value="true"/>
-              <rows value="5"/>
-            </properties>
-          </component>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="aec56" class="javax.swing.JTextArea" binding="log">
+                <constraints/>
+                <properties>
+                  <editable value="false"/>
+                  <requestFocusEnabled value="true"/>
+                  <rows value="5"/>
+                </properties>
+              </component>
+            </children>
+          </scrollpane>
         </children>
       </grid>
+      <scrollpane id="8089e">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="eea17" class="javax.swing.JList" binding="folder_list">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
     </children>
   </grid>
 </form>
