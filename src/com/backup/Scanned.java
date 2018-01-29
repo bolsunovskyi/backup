@@ -7,4 +7,5 @@ interface Scanned {
     void fileScanned(File file);
     void folderScanned(Folder folder);
     void folderStarted(Folder folder);
+    void queueFinished();
 }

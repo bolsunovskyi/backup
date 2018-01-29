@@ -42,6 +42,7 @@ public class Scanner implements Runnable {
                     folders.remove(0);
                 }
 
+                app.queueFinished();
                 try {
                     folders.wait();
                 } catch (InterruptedException e) {

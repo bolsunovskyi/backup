@@ -3,6 +3,7 @@ package com.backup.db;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTable;
@@ -23,7 +24,7 @@ public class File {
     private Date createdAt;
     @DatabaseField(canBeNull = false)
     private Date updatedAt;
-    @DatabaseField(foreign = true, columnName = "folder")
+    @DatabaseField(foreign = true, columnName = "folder_id", foreignColumnName = "id")
     private Folder folder;
 
     public File() {
@@ -79,14 +80,25 @@ public class File {
         return dao.queryForFirst(builder.prepare());
     }
 
-    public void updateHash(ConnectionSource conn) throws SQLException {
+    public static void deleteByFolder(ConnectionSource conn, int folderId) throws SQLException {
+        Dao<File, Integer> dao = File.getDao(conn);
+        DeleteBuilder<File, Integer> builder = dao.deleteBuilder();
+        builder.where().eq("folder_id", folderId);
+        dao.delete(builder.prepare());
+    }
+
+    public boolean updateHash(ConnectionSource conn) throws SQLException {
         Dao<File, Integer> dao = File.getDao(conn);
         File f = File.getByPath(conn, this.getPath());
         if (f == null) {
             dao.create(this);
+            return true;
         } else if(!f.getHash().equals(this.getHash())) {
             f.setHash(this.getHash());
             dao.update(f);
+            return true;
         }
+
+        return false;
     }
 }

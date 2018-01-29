@@ -16,6 +16,8 @@ public class App implements Scanned {
     private JLabel bar_label;
     private JTextArea log;
     private JButton rescan;
+    private JButton remove_folder;
+    private JButton scan_folder;
     private DefaultListModel<String> listModel;
     private Storage storage;
     private Scanner scanner;
@@ -54,6 +56,8 @@ public class App implements Scanned {
 
                     listModel.addElement(path);
                     this.scanner.addFolder(new Folder(path, this.storage.getConnection()));
+                    scan_folder.setEnabled(false);
+                    rescan.setEnabled(false);
 
                 } catch (SQLException ex) {
                     JOptionPane.showMessageDialog(null, ex.getMessage());
@@ -63,9 +67,52 @@ public class App implements Scanned {
         });
 
         rescan.addActionListener((ActionEvent e) -> {
+            log.setText("");
+            rescan.setEnabled(false);
+            scan_folder.setEnabled(false);
             try {
                 List<Folder> folders = Folder.getAll(storage.getConnection());
                 this.scanner.addFolders(folders);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        });
+
+        remove_folder.addActionListener((ActionEvent e) -> {
+            int index = folder_list.getSelectedIndex();
+            if (index == -1) {
+                return;
+            }
+
+            if (JOptionPane.showConfirmDialog(
+                    null,
+                    "Do you really want to delete selected folder ?") == JOptionPane.OK_OPTION) {
+
+                String folderPath = listModel.get(index);
+                try {
+                    rescan.setEnabled(false);
+                    scan_folder.setEnabled(false);
+                    Folder.remove(storage.getConnection(), folderPath);
+                    listModel.remove(index);
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(null, ex.getMessage());
+                }
+            }
+        });
+        scan_folder.addActionListener((ActionEvent e) -> {
+            int index = folder_list.getSelectedIndex();
+            if (index == -1) {
+                return;
+            }
+
+            try {
+                String folderPath = listModel.get(index);
+                Folder folder = Folder.getByPath(storage.getConnection(), folderPath);
+                if (folder != null) {
+                    scan_folder.setEnabled(false);
+                    rescan.setEnabled(false);
+                    scanner.addFolder(folder);
+                }
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
@@ -88,12 +135,18 @@ public class App implements Scanned {
 
     public void fileScanned(File file) {
         try {
-            file.updateHash(storage.getConnection());
-            log.insert(file.getHash() + " " + file.getPath() + "\r\n", 0);
+            if (file.updateHash(storage.getConnection())) {
+                log.insert(file.getHash() + " " + file.getPath() + "\r\n", 0);
+            }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, e.getMessage());
         }
 
+    }
+
+    public void queueFinished() {
+        rescan.setEnabled(true);
+        scan_folder.setEnabled(true);
     }
 
     public static void main(String[] args) {

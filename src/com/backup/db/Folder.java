@@ -74,4 +74,12 @@ public class Folder {
     public static List<Folder> getAll(ConnectionSource conn) throws SQLException {
         return Folder.getDao(conn).queryForAll();
     }
+
+    public static void remove(ConnectionSource conn, String path) throws SQLException {
+        Folder folder = Folder.getByPath(conn, path);
+        if (folder != null) {
+            File.deleteByFolder(conn, folder.getId());
+            Folder.getDao(conn).delete(folder);
+        }
+    }
 }
