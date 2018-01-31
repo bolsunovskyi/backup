@@ -18,6 +18,7 @@ public class App implements Scanned {
     private JButton rescan;
     private JButton remove_folder;
     private JButton scan_folder;
+    private JTextArea numbersArea;
     private DefaultListModel<String> listModel;
     private Storage storage;
     private Scanner scanner;
@@ -60,7 +61,7 @@ public class App implements Scanned {
                     rescan.setEnabled(false);
 
                 } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(null, ex.getMessage());
+                    log.insert(ex.getMessage(), 0);
                 }
 
             }
@@ -74,7 +75,7 @@ public class App implements Scanned {
                 List<Folder> folders = Folder.getAll(storage.getConnection());
                 this.scanner.addFolders(folders);
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage());
+                log.insert(ex.getMessage(), 0);
             }
         });
 
@@ -94,8 +95,9 @@ public class App implements Scanned {
                     scan_folder.setEnabled(false);
                     Folder.remove(storage.getConnection(), folderPath);
                     listModel.remove(index);
+                    updateNumbers();
                 } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(null, ex.getMessage());
+                    log.insert(ex.getMessage(), 0);
                 }
             }
         });
@@ -114,7 +116,7 @@ public class App implements Scanned {
                     scanner.addFolder(folder);
                 }
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage());
+                log.insert(ex.getMessage(), 0);
             }
         });
     }
@@ -129,7 +131,7 @@ public class App implements Scanned {
             folder.setUpdatedAt();
             Folder.getDao(storage.getConnection()).update(folder);
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
+            log.insert(e.getMessage(), 0);
         }
     }
 
@@ -139,14 +141,25 @@ public class App implements Scanned {
                 log.insert(file.getHash() + " " + file.getPath() + "\r\n", 0);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, e.getMessage());
+            log.insert(e.getMessage(), 0);
         }
 
+    }
+
+    private void updateNumbers() {
+        try {
+            Storage.Numbers n = this.storage.getNumbers();
+            numbersArea.setText(String.format("Total files count: %d\nTotal files size: %s\nUpdated files count: %d\nUpdated files size: %s",
+                    n.files, n.getFilesSizeStr(), n.changed, n.getChangedFilesSizeStr()));
+        } catch (SQLException e) {
+            log.insert(e.getMessage(), 0);
+        }
     }
 
     public void queueFinished() {
         rescan.setEnabled(true);
         scan_folder.setEnabled(true);
+        updateNumbers();
     }
 
     public static void main(String[] args) {

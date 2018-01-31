@@ -89,7 +89,9 @@ public class Scanner implements Runnable {
                 if (f.isFile()) {
                     String path = f.getAbsolutePath();
                     String hash = Scanner.hashFile(path);
-                    this.app.fileScanned(new com.backup.db.File(path, hash, initialFolder));
+                    long size = f.length();
+
+                    this.app.fileScanned(new com.backup.db.File(path, hash, size, initialFolder));
                 } else if(f.isDirectory() && !Files.isSymbolicLink(f.toPath())) {
                     scanFolder(f, initialFolder);
                 }

@@ -20,10 +20,14 @@ public class File {
     private String path;
     @DatabaseField(canBeNull = false)
     private String hash;
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = false, columnName = "created_at")
     private Date createdAt;
-    @DatabaseField(canBeNull = false)
+    @DatabaseField(canBeNull = false, columnName = "updated_at")
     private Date updatedAt;
+    @DatabaseField(columnName = "uploaded_at")
+    private Date uploadedAt;
+    @DatabaseField(canBeNull = false)
+    private long size;
     @DatabaseField(foreign = true, columnName = "folder_id", foreignColumnName = "id")
     private Folder folder;
 
@@ -33,6 +37,16 @@ public class File {
     public File(String path, String hash, Folder f) {
         this.path = path;
         this.hash = hash;
+        this.size = 0;
+        this.createdAt = new Date(System.currentTimeMillis());
+        this.updatedAt = new Date(System.currentTimeMillis());
+        this.folder = f;
+    }
+
+    public File(String path, String hash, long size, Folder f) {
+        this.path = path;
+        this.hash = hash;
+        this.size = size;
         this.createdAt = new Date(System.currentTimeMillis());
         this.updatedAt = new Date(System.currentTimeMillis());
         this.folder = f;
@@ -100,5 +114,21 @@ public class File {
         }
 
         return false;
+    }
+
+    public void setUploadedAt() {
+        this.uploadedAt = new Date(System.currentTimeMillis());
+    }
+
+    public void setUpdatedAt(Date dt) {
+        this.updatedAt = dt;
+    }
+
+    public void create(ConnectionSource conn) throws SQLException {
+        File.getDao(conn).create(this);
+    }
+
+    public void update(ConnectionSource conn) throws SQLException {
+        File.getDao(conn).update(this);
     }
 }
