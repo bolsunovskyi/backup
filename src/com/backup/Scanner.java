@@ -43,9 +43,9 @@ public class Scanner implements Runnable {
                     Folder folder = folders.get(0);
                     app.folderStarted(folder);
                     File startFolder = new File(folder.getPath());
+                    this.currentFolder = folder;
                     this.currentFolderFilesCount = this.filesCount(startFolder);
                     this.currentProgress = 0;
-                    this.currentFolder = folder;
                     scanFolder(startFolder, folder);
                     app.folderScanned(folder);
                     folders.remove(0);

@@ -14,14 +14,14 @@ class FileTest {
     @org.junit.jupiter.api.Test
     void getDao() {
         try {
-            Storage s = new Storage("_test_db_test.sqlite");
+            Storage s = new Storage("fixture/_test_db_test.sqlite");
             Folder folder = new Folder("test");
             Folder.getDao(s.getConnection()).create(folder);
 
             File f = new File("foo", "bar", folder);
             File.getDao(s.getConnection()).create(f);
 
-            Files.delete(Paths.get("_test_db_test.sqlite"));
+            Files.delete(Paths.get("fixture/_test_db_test.sqlite"));
         } catch (SQLException|IOException e) {
             System.out.println(e.getMessage());
         }

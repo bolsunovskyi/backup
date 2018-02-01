@@ -10,6 +10,7 @@ import com.j256.ormlite.table.DatabaseTable;
 import com.j256.ormlite.table.TableUtils;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.List;
 
 
 @DatabaseTable(tableName = "file")
@@ -130,5 +131,12 @@ public class File {
 
     public void update(ConnectionSource conn) throws SQLException {
         File.getDao(conn).update(this);
+    }
+
+    public static List<File> updatedFiles(ConnectionSource conn) throws SQLException {
+        Dao<File, Integer> dao = File.getDao(conn);
+        QueryBuilder<File, Integer> builder = dao.queryBuilder();
+        builder.where().raw("uploaded_at IS NULL OR updated_at > uploaded_at");
+        return dao.query(builder.prepare());
     }
 }

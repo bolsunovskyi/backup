@@ -20,6 +20,7 @@ public class App implements Scanned {
     private JButton scan_folder;
     private JTextArea numbersArea;
     private JCheckBox scan_update;
+    private JButton create_archive;
     private DefaultListModel<String> listModel;
     private Storage storage;
     private Scanner scanner;
@@ -62,7 +63,7 @@ public class App implements Scanned {
                     rescan.setEnabled(false);
 
                 } catch (SQLException ex) {
-                    log.insert(ex.getMessage(), 0);
+                    log.append(ex.getMessage());
                 }
 
             }
@@ -76,7 +77,7 @@ public class App implements Scanned {
                 List<Folder> folders = Folder.getAll(storage.getConnection());
                 this.scanner.addFolders(folders);
             } catch (SQLException ex) {
-                log.insert(ex.getMessage(), 0);
+                log.append(ex.getMessage());
             }
         });
 
@@ -98,7 +99,7 @@ public class App implements Scanned {
                     listModel.remove(index);
                     updateNumbers();
                 } catch (SQLException ex) {
-                    log.insert(ex.getMessage(), 0);
+                    log.append(ex.getMessage());
                 }
             }
         });
@@ -117,7 +118,7 @@ public class App implements Scanned {
                     scanner.addFolder(folder);
                 }
             } catch (SQLException ex) {
-                log.insert(ex.getMessage(), 0);
+                log.append(ex.getMessage());
             }
         });
     }
@@ -136,20 +137,21 @@ public class App implements Scanned {
             folder.setUpdatedAt();
             Folder.getDao(storage.getConnection()).update(folder);
         } catch (SQLException e) {
-            log.insert(e.getMessage(), 0);
+            log.append(e.getMessage());
         }
     }
 
     public void fileScanned(File file, long progress, long total) {
         try {
-            if (file.updateHash(storage.getConnection())) {
-                log.insert(String.format("%d/%d %s %s\r\n", progress, total, file.getHash(), file.getPath()), 0);
-            }
+            file.updateHash(storage.getConnection());
+            bar_label.setText(String.format("Files scan: %d/%d", progress, total));
+
+
             if (scan_update.isSelected()) {
                 updateNumbers();
             }
         } catch (SQLException e) {
-            log.insert(e.getMessage(), 0);
+            log.append(e.getMessage());
         }
 
     }
@@ -160,7 +162,7 @@ public class App implements Scanned {
             numbersArea.setText(String.format("Total files count: %d\nTotal files size: %s\nUpdated files count: %d\nUpdated files size: %s",
                     n.files, n.getFilesSizeStr(), n.changed, n.getChangedFilesSizeStr()));
         } catch (SQLException e) {
-            log.insert(e.getMessage(), 0);
+            log.append(e.getMessage());
         }
     }
 
