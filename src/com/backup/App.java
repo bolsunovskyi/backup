@@ -4,11 +4,13 @@ import com.backup.db.File;
 import com.backup.db.Folder;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import java.sql.SQLException;
 
-public class App implements Scanned {
+public class App implements Scanned, Archived {
     private JPanel main_panel;
     private JList <String>folder_list;
     private JButton addFolder;
@@ -61,6 +63,7 @@ public class App implements Scanned {
                     this.scanner.addFolder(new Folder(path, this.storage.getConnection()));
                     scan_folder.setEnabled(false);
                     rescan.setEnabled(false);
+                    create_archive.setEnabled(false);
 
                 } catch (SQLException ex) {
                     log.append(ex.getMessage());
@@ -115,16 +118,47 @@ public class App implements Scanned {
                 if (folder != null) {
                     scan_folder.setEnabled(false);
                     rescan.setEnabled(false);
+                    create_archive.setEnabled(false);
                     scanner.addFolder(folder);
                 }
             } catch (SQLException ex) {
                 log.append(ex.getMessage());
             }
         });
+        create_archive.addActionListener((ActionEvent e) -> {
+            try {
+                create_archive.setEnabled(false);
+                scan_folder.setEnabled(false);
+                rescan.setEnabled(false);
+                bar_label.setText("Starting to create archive...");
+                new Thread(new Archive(storage.getConnection(), this)).start();
+            } catch (IOException|SQLException ex) {
+                log.append(ex.getMessage());
+            }
+        });
+    }
+
+    public void completed(java.io.File archive) {
+        bar_label.setText("Archive created.");
+        create_archive.setEnabled(true);
+        scan_folder.setEnabled(true);
+        rescan.setEnabled(true);
+    }
+
+    public void fileArchived(long progress, long total) {
+        bar_label.setText(String.format("Archiving files: %d/%d", progress, total));
     }
 
     public void folderStarted(Folder folder) {
         bar_label.setText(folder.getPath() + " indexing...");
+    }
+
+    public void fileNotExists(com.backup.db.File file) {
+        try {
+            File.getDao(storage.getConnection()).delete(file);
+        } catch (SQLException e) {
+            log.append(e.getMessage());
+        }
     }
 
     public void fileIndexed(Folder f, long n) {
@@ -169,6 +203,7 @@ public class App implements Scanned {
     public void queueFinished() {
         rescan.setEnabled(true);
         scan_folder.setEnabled(true);
+        create_archive.setEnabled(true);
         updateNumbers();
     }
 
