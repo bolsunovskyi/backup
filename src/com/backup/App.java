@@ -19,6 +19,7 @@ public class App implements Scanned {
     private JButton remove_folder;
     private JButton scan_folder;
     private JTextArea numbersArea;
+    private JCheckBox scan_update;
     private DefaultListModel<String> listModel;
     private Storage storage;
     private Scanner scanner;
@@ -122,7 +123,11 @@ public class App implements Scanned {
     }
 
     public void folderStarted(Folder folder) {
-        bar_label.setText(folder.getPath() + " scanning...");
+        bar_label.setText(folder.getPath() + " indexing...");
+    }
+
+    public void fileIndexed(Folder f, long n) {
+        bar_label.setText(f.getPath() + " indexing... Files count: " + n);
     }
 
     public void folderScanned(Folder folder) {
@@ -135,10 +140,13 @@ public class App implements Scanned {
         }
     }
 
-    public void fileScanned(File file) {
+    public void fileScanned(File file, long progress, long total) {
         try {
             if (file.updateHash(storage.getConnection())) {
-                log.insert(file.getHash() + " " + file.getPath() + "\r\n", 0);
+                log.insert(String.format("%d/%d %s %s\r\n", progress, total, file.getHash(), file.getPath()), 0);
+            }
+            if (scan_update.isSelected()) {
+                updateNumbers();
             }
         } catch (SQLException e) {
             log.insert(e.getMessage(), 0);

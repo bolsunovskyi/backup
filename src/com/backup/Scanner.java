@@ -13,14 +13,20 @@ import java.util.List;
 public class Scanner implements Runnable {
     private Scanned app;
     private List<Folder> folders;
+    private long currentProgress;
+    private long currentFolderFilesCount;
+    private Folder currentFolder;
     
     Scanner(Scanned app) {
         this.app = app;
         this.folders = new ArrayList<>();
+        currentProgress = 0;
+        currentFolderFilesCount = 0;
     }
 
     public void addFolder(Folder folder) {
         new Thread(new AddFolder(this.folders, folder)).start();
+        this.currentFolder = folder;
     }
 
     public void addFolders(List<Folder> _folders) {
@@ -37,6 +43,9 @@ public class Scanner implements Runnable {
                     Folder folder = folders.get(0);
                     app.folderStarted(folder);
                     File startFolder = new File(folder.getPath());
+                    this.currentFolderFilesCount = this.filesCount(startFolder);
+                    this.currentProgress = 0;
+                    this.currentFolder = folder;
                     scanFolder(startFolder, folder);
                     app.folderScanned(folder);
                     folders.remove(0);
@@ -77,6 +86,31 @@ public class Scanner implements Runnable {
             return "";
         }
     }
+
+    private long filesCount(File folder) {
+        if (!folder.isDirectory()) {
+            return 0;
+        }
+
+        long count = 0;
+
+        File[] files = folder.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isFile()) {
+                    count++;
+                    this.currentProgress++;
+                    app.fileIndexed(this.currentFolder, this.currentProgress);
+                }
+
+                if(f.isDirectory() && !Files.isSymbolicLink(f.toPath())) {
+                    count += filesCount(f);
+                }
+            }
+        }
+
+        return count;
+    }
     
     private void scanFolder(File folder, Folder initialFolder) {
         if (!folder.isDirectory()) {
@@ -90,8 +124,9 @@ public class Scanner implements Runnable {
                     String path = f.getAbsolutePath();
                     String hash = Scanner.hashFile(path);
                     long size = f.length();
-
-                    this.app.fileScanned(new com.backup.db.File(path, hash, size, initialFolder));
+                    this.currentProgress++;
+                    this.app.fileScanned(new com.backup.db.File(path, hash, size, initialFolder), this.currentProgress,
+                            this.currentFolderFilesCount);
                 } else if(f.isDirectory() && !Files.isSymbolicLink(f.toPath())) {
                     scanFolder(f, initialFolder);
                 }
